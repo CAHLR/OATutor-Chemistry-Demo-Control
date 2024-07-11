@@ -319,7 +319,7 @@ class Platform extends React.Component {
             chosenProblem = problems.find(p => p.id === 'ad84a3bstoich1');
         } 
         // Check if we need to select the last problem
-        else if (this.completedProbs.size === 6) {
+        else if (this.completedProbs.size === 1) {
             chosenProblem = problems.find(p => p.id === 'ad84a3bstoich1');
         } else {
             chosenProblem = context.heuristic(problems, this.completedProbs);
@@ -338,14 +338,14 @@ class Platform extends React.Component {
         // There exists a skill that has not yet been mastered (a True)
         // Note (number <= null) returns false
         if (
-            this.completedProbs.size === 7
+            this.completedProbs.size === 1
         ) {
             this.setState({ status: "exhausted" });
             return null;
         } else if (this.completedProbs.size === 7) {
             console.debug("no problems were chosen");
             // We have finished all the problems
-            if (this.completedProbs.size === 7) {
+            if (this.completedProbs.size === 2) {
                 // If we do not allow problem recycle then we have exhausted the pool
                 this.setState({ status: "exhausted" });
                 return null;
@@ -375,10 +375,11 @@ class Platform extends React.Component {
     };
 
     problemComplete = async (context) => {
-        if (this.completedProbs.size === 6) {
+        if (this.completedProbs.size === 1) {
             this.completedProbs.add("final");
         } else {
             this.completedProbs.add(this.state.currProblem.id);
+            
         }
         const { setByKey } = this.context.browserStorage;
     
@@ -414,11 +415,11 @@ class Platform extends React.Component {
     getCurrentPhase() {
         if (this.state.currProblem && this.state.currProblem.id === 'ad84a3bstoich1' && this.completedProbs.size === 0) {
             return "Pre-test";
+        } else if (this.completedProbs.size <= 1) {
+            return "Learning";
         } else if (this.state.currProblem && this.state.currProblem.id === 'ad84a3bstoich1') {
             return "Post-test";
-        } else if (this.completedProbs.size <= 6) {
-            return "Learning";
-        } else {
+        }  else {
             return ""
         }
     }
@@ -529,6 +530,27 @@ class Platform extends React.Component {
                             Thank you for learning with {SITE_NAME}. You have
                             finished all problems.
                         </h2>
+                    </center>
+                ) : (
+                    ""
+                )}
+                {this.completedProbs.size === 1 ? (
+                    <center>
+                        <h2>
+                <p>
+                    1. Silicon nitride is a very hard, high-temperature-resistant
+                    ceramic used as a component of turbine blades in jet engines. It
+                    is prepared according to the following equation: _____. Which is
+                    the limiting Reactant when 2.00 g of Si and 1.50 g of N_2 react?
+                </p>
+                <br></br>
+                <p>
+                    2. How many Moles of CaOH2 are required to react with 1.36 mol
+                    of H3PO4 to produce Ca3PO42 according to the equation
+                    3CaOH2+2H3PO4⟶Ca3PO42+6H2O?
+                </p>
+            </h2>
+
                     </center>
                 ) : (
                     ""
