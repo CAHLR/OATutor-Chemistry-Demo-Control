@@ -39,6 +39,7 @@ class Platform extends React.Component {
         };
         this.completedProbs = new Set();
         this.lesson = null;
+        this.extraProblemProcessed = false
 
         this.user = context.user || {};
         console.debug("USER: ", this.user)
@@ -311,7 +312,18 @@ class Platform extends React.Component {
         console.debug(
             `Platform.js: available problems ${problems.length}, completed problems ${this.completedProbs.size}`
         );
-        chosenProblem = context.heuristic(problems, this.completedProbs);
+
+        // Check if we need to select the first problem
+        if (this.completedProbs.size === 0) {
+            console.log("first problem")
+            chosenProblem = problems.find(p => p.id === 'ad84a3bstoich1');
+        } 
+        // Check if we need to select the last problem
+        else if (this.completedProbs.size === 6) {
+            chosenProblem = problems.find(p => p.id === 'ad84a3bstoich1');
+        } else {
+            chosenProblem = context.heuristic(problems, this.completedProbs);
+        }
         console.debug("Platform.js: chosen problem", chosenProblem);
 
         const objectives = Object.keys(this.lesson.learningObjectives);
@@ -326,18 +338,14 @@ class Platform extends React.Component {
         // There exists a skill that has not yet been mastered (a True)
         // Note (number <= null) returns false
         if (
-            !Object.keys(context.bktParams).some(
-                (skill) =>
-                    context.bktParams[skill].probMastery <= MASTERY_THRESHOLD
-            )
+            this.completedProbs.size === 7
         ) {
-            this.setState({ status: "graduated" });
-            console.log("Graduated");
+            this.setState({ status: "exhausted" });
             return null;
-        } else if (chosenProblem == null) {
+        } else if (this.completedProbs.size === 7) {
             console.debug("no problems were chosen");
             // We have finished all the problems
-            if (this.lesson && !this.lesson.allowRecycle) {
+            if (this.completedProbs.size === 7) {
                 // If we do not allow problem recycle then we have exhausted the pool
                 this.setState({ status: "exhausted" });
                 return null;
@@ -352,7 +360,7 @@ class Platform extends React.Component {
 
         if (chosenProblem) {
             this.setState({ currProblem: chosenProblem, status: "learning" });
-            // console.log("Next problem: ", chosenProblem.id);
+            console.log("Next problem: ", chosenProblem);
             console.debug("problem information", chosenProblem);
             this.context.firebase.startedProblem(
                 chosenProblem.id,
@@ -367,8 +375,13 @@ class Platform extends React.Component {
     };
 
     problemComplete = async (context) => {
-        this.completedProbs.add(this.state.currProblem.id);
+        if (this.completedProbs.size === 6) {
+            this.completedProbs.add("final");
+        } else {
+            this.completedProbs.add(this.state.currProblem.id);
+        }
         const { setByKey } = this.context.browserStorage;
+    
         await setByKey(
             LESSON_PROGRESS_STORAGE_KEY(this.lesson.id),
             this.completedProbs
@@ -385,17 +398,30 @@ class Platform extends React.Component {
                 this.state.currProblem.id
             );
         });
+
         this._nextProblem(context);
     };
 
     displayMastery = (mastery) => {
         this.setState({ mastery: mastery });
-        if (mastery >= MASTERY_THRESHOLD) {
+        if (this.completedProbs.size === 7) {
             toast.success("You've successfully completed this assignment!", {
                 toastId: ToastID.successfully_completed_lesson.toString(),
             });
         }
     };
+
+    getCurrentPhase() {
+        if (this.state.currProblem && this.state.currProblem.id === 'ad84a3bstoich1' && this.completedProbs.size === 0) {
+            return "Pre-test";
+        } else if (this.state.currProblem && this.state.currProblem.id === 'ad84a3bstoich1') {
+            return "Post-test";
+        } else if (this.completedProbs.size <= 6) {
+            return "Learning";
+        } else {
+            return ""
+        }
+    }
 
     render() {
         const { translate } = this.props;
@@ -435,11 +461,7 @@ class Platform extends React.Component {
                                     {Boolean(
                                         findLessonById(this.props.lessonID)
                                     )
-                                        ? findLessonById(this.props.lessonID)
-                                              .name +
-                                          " " +
-                                          findLessonById(this.props.lessonID)
-                                              .topics
+                                        ? this.getCurrentPhase()
                                         : ""}
                                 </div>
                             </Grid>
@@ -501,7 +523,7 @@ class Platform extends React.Component {
                 ) : (
                     ""
                 )}
-                {this.state.status === "exhausted" ? (
+                {this.completedProbs.size === 7 ? (
                     <center>
                         <h2>
                             Thank you for learning with {SITE_NAME}. You have
@@ -511,7 +533,7 @@ class Platform extends React.Component {
                 ) : (
                     ""
                 )}
-                {this.state.status === "graduated" ? (
+                {this.completedProbs.size === 8 ? (
                     <center>
                         <h2>
                             Thank you for learning with {SITE_NAME}. You have

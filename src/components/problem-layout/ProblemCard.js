@@ -40,7 +40,6 @@ class ProblemCard extends React.Component {
 
     constructor(props, context) {
         super(props);
-        // console.log("problem lesson props:", props);
         this.step = props.step;
         this.index = props.index;
         this.giveStuFeedback = props.giveStuFeedback;
@@ -53,8 +52,14 @@ class ProblemCard extends React.Component {
 
         this.giveStuBottomHint = props.giveStuBottomHint;
         this.giveDynamicHint = props.giveDynamicHint;
-        this.showHints = this.giveStuHints == null || this.giveStuHints;
-        this.showCorrectness = this.giveStuFeedback;
+        if (props.problemID != 'ad84a3bstoich1') {
+            this.showHints = true;
+            this.showCorrectness = true;
+            this.giveStuFeedback = true;
+        } else {
+            this.showHints = this.giveStuHints == null || this.giveStuHints;
+            this.showCorrectness = this.giveStuFeedback;
+        }
         this.expandFirstIncorrect = false;
 
         this.problemTitle = props.problemTitle;
